@@ -1,0 +1,61 @@
+services:
+  #  sql:
+  #    image: sql:8.0
+  #    environment:
+  #      - MYSQL_ROOT_PASSWORD=root
+  #      - MYSQL_DATABASE=tdl
+  #    ports:
+  #      - "3306:3306"
+  #    volumes:
+  #      - mysql_data:/var/lib/sql
+  #
+  #  redis:
+  #    image: redis:alpine
+  #    ports:
+  #      - "6379:6379"
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.9
+    container_name: kibana7
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: es7
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+  mongodb:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/sql
+
+  # Java项目用RabbitMQ，Go项目用NSQ
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
+#
+#  nsq:
+#    image: nsqio/nsq
+#    command: /nsqd
+#    ports:
+#      - "4150:4150"
+#      - "4151:4151"
+
+volumes:
+  mysql_data:
+  mongo_data:
+  esdata: # 确保定义了 esdata 卷
+    driver: local
