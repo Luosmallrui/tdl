@@ -26,6 +26,7 @@ type ITaskService interface {
 	UpdateTask(task *types.Task) error
 	DeleteTask(taskID uint, userID uint) error
 	GetUserTasks(userID uint) ([]types.Task, error)
+	SearchTasks(query string, status types.TaskStatus, userID uint) ([]types.Task, error)
 }
 
 func (s *TaskService) CreateTask(task *types.Task) error {

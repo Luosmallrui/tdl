@@ -7,15 +7,15 @@ import (
 
 var _ IUserService = (*UserService)(nil)
 
-type UserService struct {
-	userRepo *sql.UserRepository
-}
 type IUserService interface {
 	GetUserByID(id uint) (*types.User, error)
 	GetUserByUsername(username string) (*types.User, error)
 	GetUserByEmail(email string) (*types.User, error)
 	CreateUser(user *types.User) error
 	UpdateUser(user *types.User) error
+}
+type UserService struct {
+	userRepo *sql.UserRepository
 }
 
 // GetUserByID 根据ID获取用户

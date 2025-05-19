@@ -1,4 +1,4 @@
-package redis
+package client
 
 import (
 	"context"
@@ -7,9 +7,7 @@ import (
 	"log"
 )
 
-var redisClient *redis.Client
-
-func InitRedis() {
+func NewRedisClient() *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     "",
 		Password: "",
@@ -20,6 +18,5 @@ func InitRedis() {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
 	fmt.Println("Connected to Redis")
-	redisClient = rdb
-	return
+	return rdb
 }
