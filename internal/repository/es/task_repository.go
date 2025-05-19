@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"tdl/internal/domain"
+	"tdl/types"
 
 	"github.com/olivere/elastic/v7"
 )
@@ -20,7 +20,7 @@ func NewTaskRepository(client *elastic.Client) *TaskRepository {
 	return &TaskRepository{client: client}
 }
 
-func (r *TaskRepository) IndexTask(task *domain.Task) error {
+func (r *TaskRepository) IndexTask(task *types.Task) error {
 	_, err := r.client.Index().
 		Index(taskIndexName).
 		Id(fmt.Sprintf("%d", task.ID)).
@@ -37,7 +37,7 @@ func (r *TaskRepository) DeleteTask(taskID uint) error {
 	return err
 }
 
-func (r *TaskRepository) Search(query string, status domain.TaskStatus, userID uint) ([]domain.Task, error) {
+func (r *TaskRepository) Search(query string, status types.TaskStatus, userID uint) ([]types.Task, error) {
 	// 构建查询条件
 	boolQuery := elastic.NewBoolQuery()
 
@@ -49,7 +49,7 @@ func (r *TaskRepository) Search(query string, status domain.TaskStatus, userID u
 		boolQuery.Must(elastic.NewTermQuery("status", status))
 	} else {
 		// 排除已删除任务
-		boolQuery.MustNot(elastic.NewTermQuery("status", domain.TaskStatusDeleted))
+		boolQuery.MustNot(elastic.NewTermQuery("status", types.TaskStatusDeleted))
 	}
 
 	// 添加搜索条件
@@ -76,9 +76,9 @@ func (r *TaskRepository) Search(query string, status domain.TaskStatus, userID u
 	}
 
 	// 解析搜索结果
-	var tasks []domain.Task
+	var tasks []types.Task
 	for _, hit := range searchResult.Hits.Hits {
-		var task domain.Task
+		var task types.Task
 		if err := json.Unmarshal(hit.Source, &task); err != nil {
 			continue
 		}

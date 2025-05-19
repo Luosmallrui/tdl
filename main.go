@@ -9,12 +9,12 @@ import (
 	"log"
 	"net/http"
 	"tdl/config"
-	"tdl/internal/domain"
 	"tdl/internal/handler"
 	"tdl/internal/repository/RabbitMQ"
 	"tdl/internal/repository/es"
 	"tdl/internal/repository/mongodb"
 	"tdl/internal/service"
+	"tdl/internal/types"
 	"tdl/pkg/elasticsearch"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// 自动迁移表结构
-	err = db.AutoMigrate(&domain.User{}, &domain.Task{})
+	err = db.AutoMigrate(&types.User{}, &types.Task{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}

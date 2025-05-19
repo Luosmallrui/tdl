@@ -1,46 +1,36 @@
-// internal/handler/user_service.go
-package handler
+package controller
 
 import (
-	"net/http"
-	"tdl/internal/domain"
-	"tdl/internal/middleware"
-	"tdl/internal/service"
-
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"tdl/internal/middleware"
+	"tdl/svc"
+	"tdl/types"
 )
 
-type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+type User struct {
+	UserService svc.IUserService
 }
 
-type RegisterRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=50"`
-	Nickname string `json:"nickname" binding:"required,min=2,max=50"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-}
-
-type UserHandler struct {
-	userService *service.UserService
-}
-
-func NewUserHandler(userService *service.UserService) *UserHandler {
-	return &UserHandler{userService: userService}
+func (u *User) RegisterRouter(r gin.IRouter) {
+	user := r.Group("/user")
+	user.POST("/login", u.Login)
+	user.POST("/register", u.Register)
+	user.GET("/profile", u.GetProfile)
+	user.PUT("/profile", u.UpdateProfile)
 }
 
 // Login 用户登录
-func (h *UserHandler) Login(c *gin.Context) {
-	var req LoginRequest
+func (u *User) Login(c *gin.Context) {
+	var req types.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 查找用户
-	user, err := h.userService.GetUserByUsername(req.Username)
+	user, err := u.UserService.GetUserByUsername(req.Username)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
@@ -72,22 +62,22 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 // Register 用户注册
-func (h *UserHandler) Register(c *gin.Context) {
-	var req RegisterRequest
+func (u *User) Register(c *gin.Context) {
+	var req types.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 检查用户名是否已存在
-	_, err := h.userService.GetUserByUsername(req.Username)
+	_, err := u.UserService.GetUserByUsername(req.Username)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Username already exists"})
 		return
 	}
 
 	// 检查邮箱是否已存在
-	_, err = h.userService.GetUserByEmail(req.Email)
+	_, err = u.UserService.GetUserByEmail(req.Email)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
 		return
@@ -101,14 +91,14 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	// 创建用户
-	user := &domain.User{
+	user := &types.User{
 		Username: req.Username,
 		Nickname: req.Nickname,
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
 
-	if err := h.userService.CreateUser(user); err != nil {
+	if err := u.UserService.CreateUser(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
@@ -132,10 +122,10 @@ func (h *UserHandler) Register(c *gin.Context) {
 }
 
 // GetProfile 获取用户资料
-func (h *UserHandler) GetProfile(c *gin.Context) {
+func (u *User) GetProfile(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
-	user, err := h.userService.GetUserByID(userID.(uint))
+	user, err := u.UserService.GetUserByID(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -152,11 +142,11 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 }
 
 // UpdateProfile 更新用户资料
-func (h *UserHandler) UpdateProfile(c *gin.Context) {
+func (u *User) UpdateProfile(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
 	// 获取当前用户
-	user, err := h.userService.GetUserByID(userID.(uint))
+	user, err := u.UserService.GetUserByID(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -180,7 +170,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 
 	if updateData.Email != "" && updateData.Email != user.Email {
 		// 检查邮箱是否已被其他用户使用
-		_, err = h.userService.GetUserByEmail(updateData.Email)
+		_, err = u.UserService.GetUserByEmail(updateData.Email)
 		if err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Email already in use"})
 			return
@@ -189,7 +179,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	}
 
 	// 保存更新
-	if err := h.userService.UpdateUser(user); err != nil {
+	if err := u.UserService.UpdateUser(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
 		return
 	}

@@ -1,16 +1,17 @@
-// Package service internal/service/task_service.go
-package service
+package svc
 
 import (
 	"fmt"
-	"tdl/internal/domain"
 	"tdl/internal/repository/RabbitMQ"
 	"tdl/internal/repository/es"
 	"tdl/internal/repository/mongodb"
 	"tdl/internal/repository/redis"
 	"tdl/internal/repository/sql"
+	"tdl/types"
 	"time"
 )
+
+var _ ITaskService = (*TaskService)(nil)
 
 type TaskService struct {
 	taskRepo         *sql.TaskRepository
@@ -20,23 +21,14 @@ type TaskService struct {
 	reminderProducer *RabbitMQ.RabbitMQProducer
 }
 
-func NewTaskService(
-	taskRepo *sql.TaskRepository,
-	taskCache *redis.TaskCache,
-	taskEsRepo *es.TaskRepository,
-	logRepo *mongodb.LogRepository,
-	reminderProducer *RabbitMQ.RabbitMQProducer,
-) *TaskService {
-	return &TaskService{
-		taskRepo:         taskRepo,
-		taskCache:        taskCache,
-		taskEsRepo:       taskEsRepo,
-		logRepo:          logRepo,
-		reminderProducer: reminderProducer,
-	}
+type ITaskService interface {
+	CreateTask(task *types.Task) error
+	UpdateTask(task *types.Task) error
+	DeleteTask(taskID uint, userID uint) error
+	GetUserTasks(userID uint) ([]types.Task, error)
 }
 
-func (s *TaskService) CreateTask(task *domain.Task) error {
+func (s *TaskService) CreateTask(task *types.Task) error {
 	// 1. 保存到MySQL
 	if err := s.taskRepo.Create(task); err != nil {
 		return err
@@ -74,7 +66,7 @@ func (s *TaskService) CreateTask(task *domain.Task) error {
 	return nil
 }
 
-func (s *TaskService) UpdateTask(task *domain.Task) error {
+func (s *TaskService) UpdateTask(task *types.Task) error {
 	// 1. 保存到MySQL
 	if err := s.taskRepo.Update(task); err != nil {
 		return err
@@ -145,7 +137,7 @@ func (s *TaskService) DeleteTask(taskID uint, userID uint) error {
 	return nil
 }
 
-func (s *TaskService) GetUserTasks(userID uint) ([]domain.Task, error) {
+func (s *TaskService) GetUserTasks(userID uint) ([]types.Task, error) {
 	// 1. 尝试从缓存获取
 	tasks, err := s.taskCache.GetUserTasks(userID)
 	if err == nil {
@@ -166,13 +158,13 @@ func (s *TaskService) GetUserTasks(userID uint) ([]domain.Task, error) {
 	return tasks, nil
 }
 
-func (s *TaskService) SearchTasks(query string, status domain.TaskStatus, userID uint) ([]domain.Task, error) {
+func (s *TaskService) SearchTasks(query string, status types.TaskStatus, userID uint) ([]types.Task, error) {
 	// 直接调用ES进行搜索
 	return s.taskEsRepo.Search(query, status, userID)
 }
 
 // 调度任务提醒
-func (s *TaskService) scheduleReminder(task *domain.Task) error {
+func (s *TaskService) scheduleReminder(task *types.Task) error {
 	location, _ := time.LoadLocation("Asia/Shanghai")
 	// 解析时间字符串
 

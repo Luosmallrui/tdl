@@ -1,31 +1,36 @@
-// internal/handler/task_handler.go
-package handler
+package controller
 
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
-	"tdl/internal/domain"
-	"tdl/internal/service"
+	"tdl/svc"
+	"tdl/types"
 )
 
-type TaskHandler struct {
-	taskService *service.TaskService
+type Task struct {
+	TaskService svc.ITaskService
 }
 
-func NewTaskHandler(taskService *service.TaskService) *TaskHandler {
-	return &TaskHandler{taskService: taskService}
+func (u *Task) RegisterRouter(r gin.IRouter) {
+	task := r.Group("/auth")
+	task.GET("/tasks", u.GetUserTasks)
+	task.POST("/tasks", u.CreateTask)
+	task.PUT("/tasks/:id", u.UpdateTask)
+	task.DELETE("/tasks/:id", u.DeleteTask)
+	task.GET("/tasks/search", u.SearchTasks)
 }
 
-func (h *TaskHandler) CreateTask(c *gin.Context) {
-	var task domain.CreateTask
+func (u *Task) CreateTask(c *gin.Context) {
+
+	var task types.CreateTask
 	if err := c.ShouldBindJSON(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	t := domain.Task{
+	t := types.Task{
 		ID:          task.ID,
 		Title:       task.Title,
 		Description: task.Description,
@@ -41,8 +46,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	// 从JWT中获取用户ID
 	//userID, _ := c.Get("userID")
 	t.UserID = 1
-
-	if err := h.taskService.CreateTask(&t); err != nil {
+	if err := u.TaskService.CreateTask(&t); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -50,10 +54,10 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, task)
 }
 
-func (h *TaskHandler) UpdateTask(c *gin.Context) {
+func (u *Task) UpdateTask(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	var task domain.Task
+	var task types.Task
 	if err := c.ShouldBindJSON(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -65,7 +69,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	task.UserID = userID.(uint)
 
-	if err := h.taskService.UpdateTask(&task); err != nil {
+	if err := u.TaskService.UpdateTask(&task); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -73,13 +77,13 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-func (h *TaskHandler) DeleteTask(c *gin.Context) {
+func (u *Task) DeleteTask(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	// 从JWT中获取用户ID
 	//userID, _ := c.Get("userID")
 
-	if err := h.taskService.DeleteTask(uint(id), 1); err != nil {
+	if err := u.TaskService.DeleteTask(uint(id), 1); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -87,11 +91,11 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
 }
 
-func (h *TaskHandler) GetUserTasks(c *gin.Context) {
+func (u *Task) GetUserTasks(c *gin.Context) {
 	// 从JWT中获取用户ID
 	//userID, _ := c.Get("userID")
 
-	tasks, err := h.taskService.GetUserTasks(1)
+	tasks, err := u.TaskService.GetUserTasks(1)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -100,22 +104,22 @@ func (h *TaskHandler) GetUserTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, tasks)
 }
 
-func (h *TaskHandler) SearchTasks(c *gin.Context) {
+func (u *Task) SearchTasks(c *gin.Context) {
 	query := c.Query("q")
-	status := domain.TaskStatus(c.Query("status"))
+	status := types.TaskStatus(c.Query("status"))
 
 	// 从JWT中获取用户ID
 	//userID, _ := c.Get("userID")
 
-	tasks, err := h.taskService.SearchTasks(query, status, 1)
+	tasks, err := u.TaskService.SearchTasks(query, status, 1)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	res := make([]domain.ListTask, 0)
+	res := make([]types.ListTask, 0)
 
 	for _, task := range tasks {
-		res = append(res, domain.ListTask{
+		res = append(res, types.ListTask{
 			ID:          task.ID,
 			Title:       task.Title,
 			Description: task.Description,

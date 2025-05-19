@@ -1,5 +1,5 @@
 // Package domain internal/domain/user.go
-package domain
+package types
 
 import "time"
 
