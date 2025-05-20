@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"tdl/dao"
 	"tdl/dao/cache"
-	"tdl/internal/repository/RabbitMQ"
-	"tdl/internal/repository/mongodb"
 	"tdl/types"
 	"time"
 )
@@ -16,8 +14,8 @@ type TaskService struct {
 	taskRepo         *dao.DbRepo
 	taskCache        *cache.TaskCache
 	taskEsRepo       *dao.EsRepo
-	logRepo          *mongodb.LogRepository
-	reminderProducer *RabbitMQ.RabbitMQProducer
+	logRepo          *dao.LogRepository
+	reminderProducer *dao.RabbitMQProducer
 }
 
 type ITaskService interface {
@@ -47,7 +45,7 @@ func (s *TaskService) CreateTask(task *types.Task) error {
 	}
 
 	// 4. 记录操作日志
-	s.logRepo.AddLog(&mongodb.OperationLog{
+	s.logRepo.AddLog(&dao.OperationLog{
 		UserID:   task.UserID,
 		Action:   "create",
 		Target:   "task",
@@ -83,7 +81,7 @@ func (s *TaskService) UpdateTask(task *types.Task) error {
 	}
 
 	// 4. 记录操作日志
-	s.logRepo.AddLog(&mongodb.OperationLog{
+	s.logRepo.AddLog(&dao.OperationLog{
 		UserID:   task.UserID,
 		Action:   "update",
 		Target:   "task",
@@ -127,7 +125,7 @@ func (s *TaskService) DeleteTask(taskID uint, userID uint) error {
 	}
 
 	// 5. 记录操作日志
-	s.logRepo.AddLog(&mongodb.OperationLog{
+	s.logRepo.AddLog(&dao.OperationLog{
 		UserID:   userID,
 		Action:   "delete",
 		Target:   "task",
