@@ -11,6 +11,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+const JWTSessionConst = "__JWT_SESSION__"
+
 var (
 	// 这个密钥在实际应用中应该从配置文件或环境变量中读取
 	secretKey = []byte("abcd")
@@ -20,6 +22,12 @@ var (
 type Claims struct {
 	UserID uint `json:"user_id"`
 	jwt.RegisteredClaims
+}
+
+type JSession struct {
+	Uid       int    `json:"uid"`
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"expires_at"`
 }
 
 // GenerateToken 生成 JWT Token

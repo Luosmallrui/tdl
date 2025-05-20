@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"runtime"
 
-	"chatroom/context/validator"
-	"chatroom/middleware"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"tdl/context/validator"
+	"tdl/pkg/middleware"
 )
 
 type Response struct {
@@ -19,6 +19,12 @@ type Response struct {
 	Message string `json:"message"`
 	Data    any    `json:"data,omitempty"`
 	Meta    any    `json:"metadata,omitempty"`
+}
+
+type JSession struct {
+	Uid       int    `json:"uid"`
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"expires_at"`
 }
 
 // MarshalOptions is a configurable JSON format marshaller.
