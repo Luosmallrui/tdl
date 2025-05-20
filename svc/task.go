@@ -11,11 +11,11 @@ import (
 var _ ITaskService = (*TaskService)(nil)
 
 type TaskService struct {
-	taskRepo         *dao.DbRepo
-	taskCache        *cache.TaskCache
-	taskEsRepo       *dao.EsRepo
-	logRepo          *dao.LogRepository
-	reminderProducer *dao.RabbitMQProducer
+	TaskRepo         *dao.DbRepo
+	TaskCache        *cache.TaskCache
+	TaskEsRepo       *dao.EsRepo
+	LogRepo          *dao.LogRepository
+	ReminderProducer *dao.RabbitMQProducer
 }
 
 type ITaskService interface {
@@ -28,24 +28,24 @@ type ITaskService interface {
 
 func (s *TaskService) CreateTask(task *types.Task) error {
 	// 1. 保存到MySQL
-	if err := s.taskRepo.Create(task); err != nil {
+	if err := s.TaskRepo.Create(task); err != nil {
 		return err
 	}
 
 	// 2. 索引到ES
-	if err := s.taskEsRepo.IndexTask(task); err != nil {
+	if err := s.TaskEsRepo.IndexTask(task); err != nil {
 		fmt.Println(err)
 		// 记录错误但不阻止流程
 		// TODO: 可以考虑使用消息队列重试
 	}
 
 	// 3. 清除用户任务缓存
-	if err := s.taskCache.InvalidateUserTasks(task.UserID); err != nil {
+	if err := s.TaskCache.InvalidateUserTasks(task.UserID); err != nil {
 		// 记录错误但不阻止流程
 	}
 
 	// 4. 记录操作日志
-	s.logRepo.AddLog(&dao.OperationLog{
+	s.LogRepo.AddLog(&dao.OperationLog{
 		UserID:   task.UserID,
 		Action:   "create",
 		Target:   "task",
@@ -66,22 +66,22 @@ func (s *TaskService) CreateTask(task *types.Task) error {
 
 func (s *TaskService) UpdateTask(task *types.Task) error {
 	// 1. 保存到MySQL
-	if err := s.taskRepo.Update(task); err != nil {
+	if err := s.TaskRepo.Update(task); err != nil {
 		return err
 	}
 
 	// 2. 更新ES索引
-	if err := s.taskEsRepo.IndexTask(task); err != nil {
+	if err := s.TaskEsRepo.IndexTask(task); err != nil {
 		// 记录错误但不阻止流程
 	}
 
 	// 3. 清除用户任务缓存
-	if err := s.taskCache.InvalidateUserTasks(task.UserID); err != nil {
+	if err := s.TaskCache.InvalidateUserTasks(task.UserID); err != nil {
 		// 记录错误但不阻止流程
 	}
 
 	// 4. 记录操作日志
-	s.logRepo.AddLog(&dao.OperationLog{
+	s.LogRepo.AddLog(&dao.OperationLog{
 		UserID:   task.UserID,
 		Action:   "update",
 		Target:   "task",
@@ -99,7 +99,7 @@ func (s *TaskService) UpdateTask(task *types.Task) error {
 
 func (s *TaskService) DeleteTask(taskID uint, userID uint) error {
 	// 1. 获取任务
-	task, err := s.taskRepo.FindByID(taskID)
+	task, err := s.TaskRepo.FindByID(taskID)
 	if err != nil {
 		return err
 	}
@@ -110,22 +110,22 @@ func (s *TaskService) DeleteTask(taskID uint, userID uint) error {
 	}
 
 	// 2. 从MySQL标记为删除
-	if err := s.taskRepo.Delete(taskID); err != nil {
+	if err := s.TaskRepo.Delete(taskID); err != nil {
 		return err
 	}
 
 	// 3. 从ES删除
-	if err := s.taskEsRepo.DeleteTask(taskID); err != nil {
+	if err := s.TaskEsRepo.DeleteTask(taskID); err != nil {
 		// 记录错误但不阻止流程
 	}
 
 	// 4. 清除用户任务缓存
-	if err := s.taskCache.InvalidateUserTasks(userID); err != nil {
+	if err := s.TaskCache.InvalidateUserTasks(userID); err != nil {
 		// 记录错误但不阻止流程
 	}
 
 	// 5. 记录操作日志
-	s.logRepo.AddLog(&dao.OperationLog{
+	s.LogRepo.AddLog(&dao.OperationLog{
 		UserID:   userID,
 		Action:   "delete",
 		Target:   "task",
@@ -137,19 +137,19 @@ func (s *TaskService) DeleteTask(taskID uint, userID uint) error {
 
 func (s *TaskService) GetUserTasks(userID uint) ([]types.Task, error) {
 	// 1. 尝试从缓存获取
-	tasks, err := s.taskCache.GetUserTasks(userID)
+	tasks, err := s.TaskCache.GetUserTasks(userID)
 	if err == nil {
 		return tasks, nil
 	}
 
 	// 2. 缓存未命中，从MySQL获取
-	tasks, err = s.taskRepo.FindByUserID(userID)
+	tasks, err = s.TaskRepo.FindByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 3. 更新缓存
-	if err := s.taskCache.CacheUserTasks(userID, tasks); err != nil {
+	if err := s.TaskCache.CacheUserTasks(userID, tasks); err != nil {
 		// 记录错误但不阻止流程
 	}
 
@@ -158,7 +158,7 @@ func (s *TaskService) GetUserTasks(userID uint) ([]types.Task, error) {
 
 func (s *TaskService) SearchTasks(query string, status types.TaskStatus, userID uint) ([]types.Task, error) {
 	// 直接调用ES进行搜索
-	return s.taskEsRepo.Search(query, status, userID)
+	return s.TaskEsRepo.Search(query, status, userID)
 }
 
 // 调度任务提醒
@@ -176,7 +176,7 @@ func (s *TaskService) scheduleReminder(task *types.Task) error {
 	}
 
 	// 发送到Rabbitmq
-	err := s.reminderProducer.Publish("task_reminders", message, task.ReminderAt)
+	err := s.ReminderProducer.Publish("task_reminders", message, task.ReminderAt)
 	if err != nil {
 		fmt.Println(err, "ok")
 		return err

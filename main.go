@@ -2,17 +2,30 @@
 package main
 
 import (
-	"fmt"
 	"github.com/urfave/cli/v2"
+	"log"
+	"os"
 	"tdl/pkg/core"
 )
 
 func main() {
+	app := &cli.App{
+		Name:  "app",
+		Usage: "app",
+		Action: func(c *cli.Context) error {
+			App, err := NewInjector()
+			if err != nil {
+				log.Fatalf("wire injector failed: %v", err)
+			}
+			App.RegisterRoutes()
+			if err := core.Run(c.Context, App); err != nil {
+				log.Println(err)
+			}
+			return nil
+		},
+	}
 
-	ctx := &cli.Context{}
-	App := NewInjector()
-	App.RegisterRoutes()
-	if err := core.Run(ctx, App); err != nil {
-		fmt.Println(err)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
 	}
 }

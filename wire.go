@@ -11,7 +11,7 @@ import (
 	"tdl/pkg/core"
 )
 
-func NewInjector() *core.AppProvider {
+func NewInjector() (*core.AppProvider, error) {
 	panic(
 		wire.Build(
 			controller.ProviderSet,

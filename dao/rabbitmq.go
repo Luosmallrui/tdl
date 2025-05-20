@@ -189,8 +189,9 @@ func (c *ReminderConsumer) handleReminder(task map[string]interface{}) error {
 }
 
 // 创建新的 Producer
-func NewRabbitMQProducer(conn *amqp.Connection, exchange string) (*RabbitMQProducer, error) {
+func NewRabbitMQProducer(conn *amqp.Connection) (*RabbitMQProducer, error) {
 	ch, err := conn.Channel()
+	exchange := "remainder" // 交换机名称
 	if err != nil {
 		return nil, err
 	}

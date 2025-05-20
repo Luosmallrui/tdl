@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"net/http"
@@ -50,9 +49,9 @@ func GetServerId() string {
 	return serverId
 }
 
-func Run(ctx *cli.Context, app *AppProvider) error {
+func Run(ctx context.Context, app *AppProvider) error {
 
-	eg, groupCtx := errgroup.WithContext(ctx.Context)
+	eg, groupCtx := errgroup.WithContext(ctx)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
 

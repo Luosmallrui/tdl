@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"tdl/internal/middleware"
+	"tdl/pkg/middleware"
 	"tdl/svc"
 	"tdl/types"
 )
