@@ -2,11 +2,10 @@ package svc
 
 import (
 	"fmt"
+	"tdl/dao"
+	"tdl/dao/cache"
 	"tdl/internal/repository/RabbitMQ"
-	"tdl/internal/repository/es"
 	"tdl/internal/repository/mongodb"
-	"tdl/internal/repository/redis"
-	"tdl/internal/repository/sql"
 	"tdl/types"
 	"time"
 )
@@ -14,9 +13,9 @@ import (
 var _ ITaskService = (*TaskService)(nil)
 
 type TaskService struct {
-	taskRepo         *sql.TaskRepository
-	taskCache        *redis.TaskCache
-	taskEsRepo       *es.TaskRepository
+	taskRepo         *dao.DbRepo
+	taskCache        *cache.TaskCache
+	taskEsRepo       *dao.EsRepo
 	logRepo          *mongodb.LogRepository
 	reminderProducer *RabbitMQ.RabbitMQProducer
 }

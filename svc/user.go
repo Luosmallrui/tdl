@@ -1,7 +1,7 @@
 package svc
 
 import (
-	"tdl/internal/repository/sql"
+	"tdl/dao"
 	"tdl/types"
 )
 
@@ -15,7 +15,7 @@ type IUserService interface {
 	UpdateUser(user *types.User) error
 }
 type UserService struct {
-	userRepo *sql.UserRepository
+	userRepo *dao.UserRepo
 }
 
 // GetUserByID 根据ID获取用户

@@ -5,6 +5,8 @@ package main
 import (
 	"github.com/google/wire"
 	"tdl/controller"
+	"tdl/dao"
+	"tdl/pkg/client"
 
 	"tdl/pkg/core"
 )
@@ -14,6 +16,8 @@ func NewInjector() *core.AppProvider {
 		wire.Build(
 			controller.ProviderSet,
 			core.ProviderSet,
+			client.ProviderSet,
+			dao.ProviderSet,
 		),
 	)
 }

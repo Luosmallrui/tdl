@@ -1,5 +1,4 @@
-// Package sql internal/repository/sql/task_repository.go
-package sql
+package dao
 
 import (
 	"gorm.io/gorm"
@@ -10,7 +9,7 @@ type DbRepo struct {
 	db *gorm.DB
 }
 
-func NewTaskRepository(db *gorm.DB) *DbRepo {
+func NewDbRepository(db *gorm.DB) *DbRepo {
 	return &DbRepo{db: db}
 }
 
