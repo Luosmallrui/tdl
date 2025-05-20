@@ -14,7 +14,7 @@ type Task struct {
 }
 
 func (u *Task) RegisterRouter(r gin.IRouter) {
-	task := r.Group("/auth")
+	task := r.Group("/")
 	task.GET("/tasks", u.GetUserTasks)
 	task.POST("/tasks", u.CreateTask)
 	task.PUT("/tasks/:id", u.UpdateTask)

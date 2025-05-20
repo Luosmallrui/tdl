@@ -9,8 +9,9 @@ type Controller interface {
 
 // RegisterRouters 注册所有路由
 func (c *Controllers) RegisterRouters(r gin.IRouter) {
-	c.User.RegisterRouter(r)
-	c.Task.RegisterRouter(r)
+	api := r.Group("/api")
+	c.User.RegisterRouter(api)
+	c.Task.RegisterRouter(api)
 	// ... 注册其他 controller 的路由
 }
 

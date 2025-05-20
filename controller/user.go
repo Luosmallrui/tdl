@@ -14,7 +14,7 @@ type User struct {
 }
 
 func (u *User) RegisterRouter(r gin.IRouter) {
-	user := r.Group("/user")
+	user := r.Group("/")
 	user.POST("/login", u.Login)
 	user.POST("/register", u.Register)
 	user.GET("/profile", u.GetProfile)
