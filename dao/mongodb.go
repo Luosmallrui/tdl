@@ -24,7 +24,8 @@ type LogRepository struct {
 	collection *mongo.Collection
 }
 
-func NewLogRepository(db *mongo.Database) *LogRepository {
+func NewLogRepository(dbClient *mongo.Client) *LogRepository {
+	db := dbClient.Database("k")
 	collection := db.Collection("operation_logs")
 
 	// 检查是否已经存在TTL索引

@@ -28,7 +28,8 @@ type ReminderConsumer struct {
 }
 
 // 创建新的 Consumer
-func NewReminderConsumer(conn *amqp.Connection, queue string, mongoClient *mongo.Client) (*ReminderConsumer, error) {
+func NewReminderConsumer(conn *amqp.Connection, mongoClient *mongo.Client) (*ReminderConsumer, error) {
+	queue := "task_reminders"
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
@@ -37,6 +38,7 @@ func NewReminderConsumer(conn *amqp.Connection, queue string, mongoClient *mongo
 }
 func (c *ReminderConsumer) Start() error {
 	// 声明队列
+
 	_, err := c.channel.QueueDeclare(
 		"task_reminders", // 队列名称
 		true,             // durable: 队列持久化
@@ -45,6 +47,7 @@ func (c *ReminderConsumer) Start() error {
 		false,            // noWait: 是否等待服务端响应
 		nil,              // arguments: 其他参数
 	)
+	fmt.Println("start consume", err)
 	if err != nil {
 		fmt.Println(err, 51)
 		return fmt.Errorf("failed to declare queue: %v", err)
@@ -88,7 +91,6 @@ func (c *ReminderConsumer) Start() error {
 			log.Printf("Failed to handle reminder: %v", err)
 		}
 	}
-
 	return nil
 }
 

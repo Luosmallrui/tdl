@@ -35,8 +35,8 @@ func NewInjector() (*core.AppProvider, error) {
 		return nil, err
 	}
 	esRepo := dao.NewEsRepo(elasticClient)
-	database := client.NewMongoDbClient()
-	logRepository := dao.NewLogRepository(database)
+	mongoClient := client.NewMongoDbClient()
+	logRepository := dao.NewLogRepository(mongoClient)
 	connection := client.NewRabbitmqClient()
 	rabbitMQProducer, err := dao.NewRabbitMQProducer(connection)
 	if err != nil {
@@ -56,9 +56,14 @@ func NewInjector() (*core.AppProvider, error) {
 		User: user,
 		Task: task,
 	}
+	reminderConsumer, err := dao.NewReminderConsumer(connection, mongoClient)
+	if err != nil {
+		return nil, err
+	}
 	appProvider := &core.AppProvider{
-		Engine:      engine,
-		Controllers: controllers,
+		Engine:           engine,
+		Controllers:      controllers,
+		RabbitMQConsumer: reminderConsumer,
 	}
 	return appProvider, nil
 }

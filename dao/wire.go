@@ -13,4 +13,5 @@ var ProviderSet = wire.NewSet(
 	NewEsRepo,
 	cache.NewTaskCache,
 	NewLogRepository,
+	NewReminderConsumer,
 )

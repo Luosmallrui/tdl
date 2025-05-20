@@ -7,13 +7,11 @@ import (
 	"log"
 )
 
-func NewMongoDbClient() *mongo.Database {
+func NewMongoDbClient() *mongo.Client {
 	mongoClient, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
 	//defer mongoClient.Disconnect(context.Background())
-
-	mongoDB := mongoClient.Database("k")
-	return mongoDB
+	return mongoClient
 }

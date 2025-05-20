@@ -14,6 +14,7 @@ import (
 	"sync"
 	"syscall"
 	"tdl/controller"
+	"tdl/dao"
 
 	//"tdl/controller"
 	"time"
@@ -41,8 +42,9 @@ func (app *AppProvider) RegisterRoutes() {
 }
 
 type AppProvider struct {
-	Engine      *gin.Engine
-	Controllers *controller.Controllers
+	Engine           *gin.Engine
+	Controllers      *controller.Controllers
+	RabbitMQConsumer *dao.ReminderConsumer
 }
 
 func GetServerId() string {

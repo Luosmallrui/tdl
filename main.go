@@ -18,6 +18,7 @@ func main() {
 				log.Fatalf("wire injector failed: %v", err)
 			}
 			App.RegisterRoutes()
+			go App.RabbitMQConsumer.Start()
 			if err := core.Run(c.Context, App); err != nil {
 				log.Println(err)
 			}
